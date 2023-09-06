@@ -26,6 +26,4 @@ This app is a POC to demonstrate this new feature.
 
 - 0.9 , Initial release
 
-
-<img width="612" alt="Jamf RTS" src="https://github.com/red5coder/jamf-return-to-service/assets/29920386/753fa120-91b1-490c-93e7-6258a6e2ec5c">
-
+<img width="612" alt="Jamf RTS" src="https://github.com/red5coder/jamf-return-to-service/assets/29920386/e64b8257-5a60-4192-bca5-5309905e527e">
