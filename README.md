@@ -13,7 +13,7 @@ This app is a POC to demonstrate this new feature.
 - Jamf Pro 10.50 or higher
 - The iOS and iPadOS devices must be running 17+
 - The iOS and iPadOS must be enabled for Automated Enrollment
-- A Wi-Fi configuration profile that can be used with the Return of Service. This profile must allow wi-fi access without user interaction and must not use a captive portal. Make sure this profile stsys scoped to the device after enrollment.
+- A Wi-Fi configuration profile that can be used with the Return of Service. This profile must allow wi-fi access without user interaction and must not use a captive portal. Make sure this profile stays scoped to the device after enrollment.
 - Jamf Pro Account or API Role / Client that has the following minimum permissions
   - Read Mobile Devices
   - Read Mobile Device Configuration Profiles
