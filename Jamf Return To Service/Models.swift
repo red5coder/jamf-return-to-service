@@ -7,6 +7,30 @@
 
 import Foundation
 
+// MARK: - Wi-Fi PopupMenu
+struct WiFiMenuItem: Hashable {
+    let id = UUID()
+    let name: String
+    let profileID: String
+    
+}
+
+// MARK: - All MobileConfigProfile
+struct AllMobileConfigProfiles: Codable {
+    let configurationProfiles: [ConfigurationProfile]
+
+    enum CodingKeys: String, CodingKey {
+        case configurationProfiles = "configuration_profiles"
+    }
+    
+    // MARK: - ConfigurationProfile
+    struct ConfigurationProfile: Codable {
+        let id: Int
+        let name: String
+    }
+
+}
+
 // MARK: - MobileConfigProfile
 struct MobileConfigProfile: Codable {
     let configurationProfile: ConfigurationProfile
@@ -53,7 +77,7 @@ struct Mobile: Codable {
     let mobile_device: MobileDetail
 }
 
-// MARK: - Computer Model
+// MARK: - Mobile Detail
 struct MobileDetail: Codable {
     let general: MobileGeneral
 

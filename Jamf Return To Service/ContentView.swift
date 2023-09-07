@@ -12,60 +12,52 @@ struct ContentView: View {
     @AppStorage("jamfURL") var jamfURL: String = ""
     @AppStorage("userName") var userName: String = ""
     @AppStorage("useAPIRoles") var useAPIRoles: Bool = false
-    @AppStorage("wifiDetails") var wifiDetails: String = ""
 
     @State private var password = ""
     
-    @State private var disableVerifyWiFiButton = true
+    //Buttons
     @State private var disableRTSFButton = true
 
-    
-    
-    
     //Alert
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var alertTitle = ""
     
+    
     @State private var serialNumber = ""
     @State private var showActivity = false
     
-    
+    //Picker
+    @State private var wifiMenuItems = [WiFiMenuItem(name: "No Wi-Fi Profiles", profileID: "0")]
+    @State private var selectedWifiItem = "0"
+    @State private var foundWiFiProfiles = false
+
     var body: some View {
         
         HStack(alignment: .center) {
             
             VStack(alignment: .trailing, spacing: 12.0) {
-                Text("ID or Name of Wi-Fi Profile:")
+                Text("Wi-Fi Profile:")
                 Text("Serial Number:")
             }
+            
             VStack(alignment: .leading, spacing: 7.0) {
-                TextField("" , text: $wifiDetails, onEditingChanged: { (changed) in
-
-                })
-                .textFieldStyle(.roundedBorder)
-                .onChange(of: wifiDetails) { newValue in
-                    if wifiDetails.isEmpty {
-                        disableVerifyWiFiButton = true
-                        disableRTSFButton = true
-                    } else {
-                        disableVerifyWiFiButton = false
-                        disableRTSFButton = false
+                Picker("", selection: $selectedWifiItem) {
+                    ForEach(wifiMenuItems, id: \.profileID) {
+                        Text($0.name)
                     }
                 }
-                
                 TextField("" , text: $serialNumber)
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: serialNumber) { newValue in
-                        if wifiDetails.isEmpty && serialNumber.isEmpty {
-                            disableVerifyWiFiButton = true
+                        if !foundWiFiProfiles || serialNumber.isEmpty {
                             disableRTSFButton = true
                         } else {
-                            disableVerifyWiFiButton = false
                             disableRTSFButton = false
                         }
                     }
             }
+
         }
         .padding([.leading,.trailing])
         .alert(isPresented: self.$showAlert,
@@ -73,13 +65,6 @@ struct ContentView: View {
             self.showCustomAlert()
         })
         .padding([.leading,.trailing, .bottom])
-        HStack(alignment: .center) {
-            
-            VStack(alignment: .leading, spacing: 7.0) {
-                
-            }
-        }
-        .padding([.leading,.trailing])
         .task {
             let defaults = UserDefaults.standard
             useAPIRoles = defaults.bool(forKey: "useAPIRoles")
@@ -89,34 +74,32 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            //            if savePassword  {
             fetchPassword()
-            let defaults = UserDefaults.standard
-            wifiDetails = defaults.string(forKey: "wifiDetails") ?? ""
-            if !wifiDetails.isEmpty {
-                disableVerifyWiFiButton = false
-            }
         }
         
         HStack(alignment: .center) {
-            Button("Verify Wi-Fil Profile") {
+            
+            VStack(alignment: .leading, spacing: 7.0) {
+                
+            }
+        }
+        .padding([.leading,.trailing])
+        
+        HStack(alignment: .center) {
+            Button("Find Wi-Fi Profiles") {
                 Task {
                     fetchPassword()
                     await verifyWiFiProfile()
                 }
             }
-            .disabled(disableVerifyWiFiButton)
             
             Button("Return To Service") {
                 Task {
                     fetchPassword()
                     await sendRTS()
-                    //                    fetchPassword()
-                    //                    await fetchLAPSPassword()
                 }
             }
             .disabled(disableRTSFButton)
-            //.disabled(fetchPassewordButtonDisabled)
             ProgressView()
                 .scaleEffect(0.5)
                 .opacity(showActivity ? 1 : 0)
@@ -130,15 +113,10 @@ struct ContentView: View {
             //userName = credentialsArray[0]
             password = credentialsArray[1]
         }
-        
         let defaults = UserDefaults.standard
         useAPIRoles = defaults.bool(forKey: "useAPIRoles")
         jamfURL = defaults.string(forKey: "jamfURL") ?? ""
         userName = defaults.string(forKey: "userName") ?? ""
-
-        
-        
-        
     }
     
     func showCustomAlert() -> Alert {
@@ -175,17 +153,16 @@ struct ContentView: View {
             showActivity = false
             return
         }
-        let (mobileConfig, response) = await jamfPro.fetchMobileConfig(jssURL: jamfURL, authToken: bearerToken, name: wifiDetails)
+        let (mobileConfig, response) = await jamfPro.fetchMobileConfig(jssURL: jamfURL, authToken: bearerToken, id: selectedWifiItem)
         
         guard let mobileConfig else { return }
         
-        let (mobileID, idresponse) = await jamfPro.getMobileID(jssURL: jamfURL, authToken: bearerToken, serialNumber: serialNumber)
+        let (mobileID, idresponse) = await jamfPro.getMobileDevceID(jssURL: jamfURL, authToken: bearerToken, serialNumber: serialNumber)
         
         guard let mobileID else { return }
         
         let (managementid, manresponse) = await jamfPro.getMobileManagementID(jssURL: jamfURL, authToken: bearerToken, id: mobileID)
         guard let managementid else { return }
-
 
         let rtsresponse = await jamfPro.sendRTS(jssURL: jamfURL, authToken: bearerToken, wifi: mobileConfig.configurationProfile.general.payloads, managementid: managementid)
         
@@ -197,24 +174,21 @@ struct ContentView: View {
             alertTitle = "Return To Service"
             showAlert = true
             showActivity = false
-
         } else {
             //failure
             alertMessage = "The return to service command failed with error \(rtsresponse)"
             alertTitle = "Return To Service"
             showAlert = true
             showActivity = false
-
         }
-
-
     }
         
     func verifyWiFiProfile() async {
+        showActivity = true
+        
         let jamfPro = JamfProAPI(username: userName, password: password)
         let (bearerToken, _) = await jamfPro.getToken(jssURL: jamfURL, base64Credentials: jamfPro.base64Credentials, useAPIRole: useAPIRoles)
-
-
+        
         guard let bearerToken else {
             alertMessage = "Could not authenticate. Please check the url and authentication details"
             alertTitle = "Authentication Error"
@@ -222,37 +196,40 @@ struct ContentView: View {
             showActivity = false
             return
         }
+        
+        let (allMobileConfigProfiles , allProfilesResponse) = await jamfPro.getAllMobileConfigProfiles(jssURL: jamfURL, authToken: bearerToken)
 
-        let (mobileConfig, response) = await jamfPro.fetchMobileConfig(jssURL: jamfURL, authToken: bearerToken, name: wifiDetails)
-        
-        guard let mobileConfig else {
-            alertMessage = "Could not locate the mobile config. Please verify the ID or name."
-            alertTitle = "Wi-Fi Mobile Config Profile"
-            showAlert = true
-            showActivity = false
-            return
-        }
-        guard let response, response == 200 else {
-            alertMessage = "Could not locate the mobile config. Please verify the ID or name."
+        guard let allMobileConfigProfiles, allMobileConfigProfiles.configurationProfiles.count > 0 else {
+            alertMessage = "Could not locate any mobile config. Please verify the ID or name."
             alertTitle = "Wi-Fi Mobile Config Profile"
             showAlert = true
             showActivity = false
             return
         }
         
-        if !mobileConfig.configurationProfile.general.payloads.lowercased().contains("com.apple.wifi.managed") {
-            alertMessage = "The mobile config does not seem to contain a valid Wi-Fi payload."
-            alertTitle = "Wi-Fi Mobile Config Profile"
-            showAlert = true
-            showActivity = false
-            return
+        wifiMenuItems = [WiFiMenuItem]()
+        
+        for profile in allMobileConfigProfiles.configurationProfiles {
+            if await jamfPro.isWifiMobileConfigProfile(jssURL: jamfURL, authToken: bearerToken, id: profile.id) {
+                wifiMenuItems.append(WiFiMenuItem(name: profile.name, profileID: String(profile.id)))
+            }
+        }
+        if wifiMenuItems.count > 0 {
+            selectedWifiItem = wifiMenuItems[0].profileID
+            foundWiFiProfiles = true
+        } else {
+            wifiMenuItems = [WiFiMenuItem(name: "No Wi-Fi Profiles Found", profileID: "0")]
+            selectedWifiItem = "0"
+            foundWiFiProfiles = false
         }
         
-        alertMessage = "The mobile config seems valid."
-        alertTitle = "Wi-Fi Mobile Config Profile"
-        showAlert = true
+        if !foundWiFiProfiles || serialNumber.isEmpty {
+            disableRTSFButton = true
+        } else {
+            disableRTSFButton = false
+        }
+        
         showActivity = false
-
     }
 }
 

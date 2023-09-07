@@ -19,8 +19,87 @@ struct JamfProAPI {
             .data(using: String.Encoding.utf8)!
             .base64EncodedString()
     }
+
     
-    func getMobileID(jssURL: String, authToken: String, serialNumber: String) async -> (Int?,Int?) {
+    func isWifiMobileConfigProfile(jssURL: String, authToken: String, id: Int ) async -> Bool  {
+        Logger.rts.info("Checking config profile id \(id, privacy: .public) for Wi-Fi payload")
+        
+        guard var jamfmobileEndpoint = URLComponents(string: jssURL) else {
+            return false
+        }
+        
+        jamfmobileEndpoint.path="/JSSResource/mobiledeviceconfigurationprofiles/id/\(id)/subset/General"
+
+        guard let url = jamfmobileEndpoint.url else {
+            return false
+        }
+        
+        var mobileConfigRequest = URLRequest(url: url)
+        mobileConfigRequest.httpMethod = "GET"
+        mobileConfigRequest.setValue("Bearer \(authToken)", forHTTPHeaderField: "Authorization")
+        mobileConfigRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+        guard let (data, response) = try? await URLSession.shared.data(for: mobileConfigRequest)
+        else {
+            return false
+        }
+        
+        let httpResponse = response as? HTTPURLResponse
+        if let response = httpResponse?.statusCode {
+            Logger.rts.info("Response code for fetching  mobile config profile: \(response, privacy: .public)")
+        }
+        do {
+            let mobileConfigProfile = try JSONDecoder().decode(MobileConfigProfile.self, from: data)
+            if mobileConfigProfile.configurationProfile.general.payloads.lowercased().contains("com.apple.wifi.managed") {
+                Logger.rts.info("Profile \(id, privacy: .public) does have a wi-fi payload")
+
+                return true
+            } else {
+                Logger.rts.info("Profile \(id, privacy: .public) does not have a wi-fi payload")
+                return false
+            }
+        } catch _ {
+            Logger.rts.error("Could not decode mobile config profile")
+            return false
+        }
+    }
+
+    
+    func getAllMobileConfigProfiles(jssURL: String, authToken: String) async -> (AllMobileConfigProfiles?, Int?)  {
+        Logger.rts.info("About to fetch all Mobile Config Profiles")
+        guard var jamfcomputerEndpoint = URLComponents(string: jssURL) else {
+            return (nil,nil)
+        }
+        jamfcomputerEndpoint.path="/JSSResource/mobiledeviceconfigurationprofiles"
+
+        guard let url = jamfcomputerEndpoint.url else {
+            return (nil,nil)
+        }
+        
+        var mobileConfigRequest = URLRequest(url: url)
+        mobileConfigRequest.httpMethod = "GET"
+        mobileConfigRequest.setValue("Bearer \(authToken)", forHTTPHeaderField: "Authorization")
+        mobileConfigRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+        guard let (data, response) = try? await URLSession.shared.data(for: mobileConfigRequest)
+        else {
+            return (nil,nil)
+        }
+        
+        let httpResponse = response as? HTTPURLResponse
+        if let response = httpResponse?.statusCode {
+            Logger.rts.info("Response code for fetching all mobile config profiles: \(response, privacy: .public)")
+        }
+        do {
+            let allMobileConfigProfiles = try JSONDecoder().decode(AllMobileConfigProfiles.self, from: data)
+            Logger.rts.info("\(allMobileConfigProfiles.configurationProfiles.count, privacy: .public) mobile config profiles where found")
+            return ( allMobileConfigProfiles, httpResponse?.statusCode)
+        } catch _ {
+            Logger.rts.error("Could not decode mobile config profile")
+            return (nil , nil)
+        }
+    }
+
+    
+    func getMobileDevceID(jssURL: String, authToken: String, serialNumber: String) async -> (Int?,Int?) {
         Logger.rts.info("About to fetch the mobile id for \(serialNumber)")
 
         guard var jamfMobileEndpoint = URLComponents(string: jssURL) else {
@@ -195,18 +274,13 @@ struct JamfProAPI {
 
     }
     
-    func fetchMobileConfig(jssURL: String, authToken: String, name: String) async -> (MobileConfigProfile?,Int?)  {
-        Logger.rts.info("About to fetch Mobile Config for \(name, privacy: .public)")
+    func fetchMobileConfig(jssURL: String, authToken: String, id: String) async -> (MobileConfigProfile?,Int?)  {
+        Logger.rts.info("About to fetch Mobile Config for \(id, privacy: .public)")
         guard var jamfcomputerEndpoint = URLComponents(string: jssURL) else {
             return (nil, nil)
         }
-        
-        if Int(name) == nil {
-            jamfcomputerEndpoint.path="/JSSResource/mobiledeviceconfigurationprofiles/name/\(name)"
-        } else {
-            jamfcomputerEndpoint.path="/JSSResource/mobiledeviceconfigurationprofiles/id/\(name)"
-        }
-        
+
+        jamfcomputerEndpoint.path="/JSSResource/mobiledeviceconfigurationprofiles/id/\(id)"
 
         guard let url = jamfcomputerEndpoint.url else {
             return (nil, nil)
@@ -273,9 +347,6 @@ struct JamfProAPI {
         } else {
             authRequest.setValue("Basic \(base64Credentials)", forHTTPHeaderField: "Authorization")
         }
-        
-        
-        
         
         Logger.rts.info("Fetching Authentication Token")
         guard let (data, response) = try? await URLSession.shared.data(for: authRequest)

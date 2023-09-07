@@ -288,7 +288,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Jamf Return To Service/Jamf_Return_To_Service.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 35;
 				DEVELOPMENT_ASSET_PATHS = "\"Jamf Return To Service/Preview Content\"";
 				DEVELOPMENT_TEAM = VR4GB7TBDP;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -301,7 +301,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.9.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "uk.co.mallion.jamf-return-to-service";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -317,7 +317,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Jamf Return To Service/Jamf_Return_To_Service.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 35;
 				DEVELOPMENT_ASSET_PATHS = "\"Jamf Return To Service/Preview Content\"";
 				DEVELOPMENT_TEAM = VR4GB7TBDP;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -330,7 +330,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.9.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "uk.co.mallion.jamf-return-to-service";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
