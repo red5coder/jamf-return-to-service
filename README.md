@@ -9,7 +9,7 @@ This app is a POC to demonstrate this new feature.
 
 ### Requirements
 
-- A Mac running macOS Venture (13.0) or higher to run this app
+- A Mac running macOS Ventura (13.0) or higher to run this app
 - Jamf Pro 10.50 or higher
 - The iOS and iPadOS devices must be running 17+
 - The iOS and iPadOS must be enabled for Automated Enrollment
