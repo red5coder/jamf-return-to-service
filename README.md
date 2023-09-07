@@ -5,7 +5,7 @@ Return to Service enables a mobile device management server (MDM) such as Jamf P
 
 This allows you to wipe the device and have it automatically re-enroll straight back to the home screen without user interaction.
 
-This app is a POC to demonstrate this new feature. When launched you can ask it to fetch a list of configuration profiles that contain a wi-fi payload from Jamf Pro. Just select which one you want to use and enter the seria number of the mobile device.
+This app is a POC to demonstrate this new feature. When launched you can ask it to fetch a list of configuration profiles that contain a wi-fi payload from Jamf Pro. Just select which one you want to use and enter the serial number of the mobile device.
 
 ### Requirements
 
